@@ -30,31 +30,51 @@ jobs:
           release_name: Release ${{ github.ref }}
           body: ${{ steps.changelog.outputs.changes }}
 
-  build:
-    runs-on: ${{ matrix.os }}
+  build-mac:
+    runs-on: macos-latest
     environment: build
-
-    strategy:
-      matrix:
-        os: [macos-11]
-        platform: [
-            build-mac,
-            build-win
-        ]
 
     if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Use Node.js 14.x
+      - name: Use Node.js 16.x
         uses: actions/setup-node@v1
         with:
-          node-version: 14.x
+          node-version: 16.x
 
-      - name: Build
+      - name: Build for MacOS
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
           EP_PRE_RELEASE: true
-        run: ./cmd electron ${{ matrix.platform }}
+        run: ./cmd electron build-mac
+
+  build-win:
+    runs-on: windows-latest
+    environment: build
+
+    if: startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: Build for Windows
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          EP_PRE_RELEASE: true
+        run: |
+          npm install
+          cd electron
+          npm install
+          cd ../
+          mkdir -p ./electron/public
+          cp ./electron/index.html ./electron/public/index.html
+          node ./electron/build.js build-win
 

@@ -1,3 +1,4 @@
+const os = require('os')
 const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path')
@@ -14,6 +15,7 @@ const devloadCachePath = path.resolve(__dirname, ".devload");
 const packageFile = path.resolve(__dirname, "package.json");
 const packageBakFile = path.resolve(__dirname, "package-bak.json");
 const platform = ["build-mac", "build-win"];
+const comSuffix = os.type() == 'Windows_NT' ? '.cmd' : '';
 
 // 克隆 Drawio
 function cloneDrawio(systemInfo) {
@@ -71,7 +73,7 @@ function startBuild(data, publish) {
     econfig.build.pkg.mustClose = [data.id];
     fs.writeFileSync(packageFile, JSON.stringify(econfig, null, 2), 'utf8');
     // build
-    child_process.spawnSync("npm", ["run", data.platform + (publish === true ? "-publish" : "")], {stdio: "inherit", cwd: "electron"});
+    child_process.spawnSync("npm" + comSuffix, ["run", data.platform + (publish === true ? "-publish" : "")], {stdio: "inherit", cwd: "electron"});
     // package.json Recovery
     fse.copySync(packageBakFile, packageFile)
 }
@@ -79,8 +81,8 @@ function startBuild(data, publish) {
 if (["dev"].includes(argv[2])) {
     // 开发模式
     fs.writeFileSync(devloadCachePath, utils.formatUrl("127.0.0.1:" + env.parsed.APP_PORT), 'utf8');
-    child_process.spawn("npx", ["mix", "watch", "--hot", "--", "--env", "--electron"], {stdio: "inherit"});
-    child_process.spawn("npm", ["run", "start-quiet"], {stdio: "inherit", cwd: "electron"});
+    child_process.spawn("npx" + comSuffix, ["mix", "watch", "--hot", "--", "--env", "--electron"], {stdio: "inherit"});
+    child_process.spawn("npm" + comSuffix, ["run", "start-quiet"], {stdio: "inherit", cwd: "electron"});
 } else if (platform.includes(argv[2])) {
     // 自动编译
     config.app.sites.forEach((data) => {
